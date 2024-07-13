@@ -5,8 +5,8 @@ import { Button } from "../../components/button"
 interface InviteGuestsModalProps {
   closeGuestsModal: () => void
   emailsToInvite: string []
-  addNewEmailToInvite: (event: FormEvent<HTMLFormElement>) => void
-  removeEmailFromInvites: (email: string) => void
+  addNewEmailToInvite: (event: FormEvent<HTMLFormElement>) => void | Promise<void>
+  removeEmailFromInvites?: (email: string) => void
 }
 
 export function InviteGuestsModal({
@@ -34,8 +34,12 @@ export function InviteGuestsModal({
               return (
                 <div key={email} className='py-1.5 px-2.5 rounded-md bg-zinc-800 flex items-center gap-2'>
                   <span className='text-zinc-300'>{email}</span>
-                  <button type='button' onClick={() => removeEmailFromInvites(email)}>
-                  <X className='size-4 text-zinc-400' />
+                  <button type='button' onClick={() => removeEmailFromInvites && removeEmailFromInvites(email)}>
+                    {
+                      removeEmailFromInvites && (
+                        <X className='size-4 text-zinc-400' />
+                      )
+                    }
                   </button>
                 </div>
               )

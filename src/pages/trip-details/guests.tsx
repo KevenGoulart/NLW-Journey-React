@@ -1,8 +1,9 @@
 import { CheckCircle2, CircleDashed, UserCog } from "lucide-react";
 import { Button } from "../../components/button";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { api } from "../../lib/axios";
+import { InviteGuestsModal } from "../create-trip/invite-guests-modal";
 
 interface Participant {
     id: string
@@ -13,7 +14,39 @@ interface Participant {
 
 export function Guests() {
     const { tripId } = useParams()
-    const [participants, setParticipants] = useState<Participant[]>([])
+    const [ participants, setParticipants] = useState<Participant[]>([])
+    const emailsToInvite = participants.map((participant) => { 
+        return participant.email
+     })
+
+    const [manageGuests, setManageGuests] = useState(false)
+
+    async function addNewEmailToInvite(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+    
+        const data = new FormData(event.currentTarget)
+        const email = data.get('email')?.toString()
+    
+        if(!email) {
+          return
+        }
+    
+        if(emailsToInvite.includes(email)) {
+          return
+        }
+    
+        await api.post(`/trips/${tripId}/invites`, {
+            email
+        })
+
+        window.location.reload()
+    
+        event.currentTarget.reset()
+      }
+
+      function handleManageGuestsModal() {
+        setManageGuests(!manageGuests)
+      }
 
     useEffect(() => {
         api.get(`/trips/${tripId}/participants`).then(response => setParticipants(response.data.participants))
@@ -42,7 +75,14 @@ export function Guests() {
            })}
         </div>
 
-        <Button variant="secondary" size="full">
+        {manageGuests && (<InviteGuestsModal
+        emailsToInvite={emailsToInvite}
+        addNewEmailToInvite={addNewEmailToInvite}
+        closeGuestsModal={handleManageGuestsModal}
+         />)
+        }
+
+        <Button onClick={handleManageGuestsModal} variant="secondary" size="full">
             <UserCog className="size-5" />
             Gerenciar Convidados
         </Button>
