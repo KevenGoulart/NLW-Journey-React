@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../lib/axios";
 import { format } from "date-fns";
 import { UpdateTripModal } from "../create-trip/update-trip-modal";
+import { DateRange } from "react-day-picker";
 
 interface Trip {
     id: string
@@ -17,12 +18,31 @@ interface Trip {
 export function DestinationAndDateHeader() {
     const { tripId } = useParams()
     const [trip, setTrip] = useState<Trip | undefined>()
-    const [updateTrip, setUpdateTrip] = useState(false)
     const [ isUpdateTripModalOpen, setIsUpdateTripModalOpen ] = useState(false)
+    const [eventStartAndEndDates, setEventStartAndEndDates] = useState<DateRange | undefined>()
+    const [destination, setDestination] =  useState('')
 
-    function handleUpdateTripModal() {
-        setUpdateTrip(!updateTrip)
-      }
+    function openUpdateTripModal() {
+        setIsUpdateTripModalOpen(true)
+    }
+
+    function closeUpdateTripModal() {
+        setIsUpdateTripModalOpen(false)
+    }
+
+    async function handleUpdateTrip() {
+        if(!eventStartAndEndDates?.from || !eventStartAndEndDates?.to ) return
+
+        if(destination.length < 4) return
+
+        await api.put(`/trips/${tripId}`, {
+            destination,
+            starts_at: eventStartAndEndDates?.from,
+            ends_at: eventStartAndEndDates?.to
+        })
+
+        window.location.reload()
+    }
 
     useEffect(() => {
         api.get(`/trips/${tripId}`).then(response => setTrip(response.data.trip))
@@ -47,14 +67,20 @@ export function DestinationAndDateHeader() {
 
             <div className="w-px h-6 bg-zinc-800" />
 
-            <Button onClick={handleUpdateTripModal} variant="secondary">
+            <Button onClick={openUpdateTripModal} variant="secondary">
                 Alterar local/data
                 <Settings2 className="size-5" />
             </Button>
         </div>
 
-        {isAddLinkModalOpen && (
-                <UpdateTripModal closeAddLinkModal={closeAddLinkModal} />
+        {isUpdateTripModalOpen && (
+                <UpdateTripModal 
+                closeUpdateTripModal={closeUpdateTripModal}
+                eventStartAndEndDates={eventStartAndEndDates}
+                setDestination={setDestination}
+                setEventStartAndEndDates={setEventStartAndEndDates}
+                updateTrip={handleUpdateTrip}
+                />
             )}
     </div>
     )
